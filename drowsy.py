@@ -3,18 +3,17 @@ import mediapipe as mp
 import numpy as np
 import streamlit as st
 import pygame
-import tempfile
 
-# Initialize Streamlit
+# Streamlit configuration
 st.set_page_config(page_title="Drowsy Driver Detection", layout="wide")
 st.title("🚘 Drowsy Driver Detection")
 status_box = st.empty()
 
-# Load beep sound using pygame
+# Initialize audio alert
 pygame.mixer.init()
-pygame.mixer.music.load("alert.wav")
+pygame.mixer.music.load("alert.wav")  # Ensure this file exists
 
-# Mediapipe setup
+# MediaPipe setup
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False)
 
@@ -28,13 +27,11 @@ def get_head_tilt_angle(landmarks, img_w, img_h):
 
     vector = chin - nose
     vertical = np.array([0, 1])
-
-    # Angle between nose-chin vector and vertical
     angle_rad = np.arccos(np.dot(vector, vertical) / np.linalg.norm(vector))
     angle_deg = np.degrees(angle_rad)
     return angle_deg
 
-# OpenCV stream
+# OpenCV video stream
 cap = cv2.VideoCapture(0)
 
 with st.sidebar:
@@ -48,7 +45,6 @@ while cap.isOpened():
     if not ret:
         break
 
-    # Flip and convert color
     frame = cv2.flip(frame, 1)
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results = face_mesh.process(rgb_frame)
@@ -74,11 +70,8 @@ while cap.isOpened():
                 connection_drawing_spec=mp.solutions.drawing_styles.get_default_face_mesh_tesselation_style()
             )
 
-    # Display alert
     cv2.putText(frame, alert, (30, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, alert_color, 3)
     status_box.markdown(f"### {'🟥' if alert != 'Normal' else '🟩'} {alert}")
-    
-    # Display in Streamlit
     stframe.image(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), channels="RGB", use_column_width=True)
 
 cap.release()
