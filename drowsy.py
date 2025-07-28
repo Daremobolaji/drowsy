@@ -10,8 +10,15 @@ st.title("🚘 Drowsy Driver Detection")
 status_box = st.empty()
 
 # Initialize audio alert
-pygame.mixer.init()
-pygame.mixer.music.load("alert.wav")  # Ensure this file exists
+# Try initializing audio safely
+audio_enabled = True
+try:
+    pygame.mixer.init()
+    pygame.mixer.music.load("alert.wav")
+except pygame.error:
+    audio_enabled = False
+    print("⚠️ Audio device not available. Sound will be disabled.")
+
 
 # MediaPipe setup
 mp_face_mesh = mp.solutions.face_mesh
@@ -59,10 +66,12 @@ while cap.isOpened():
             if angle < 90 - drowsy_threshold or angle > 90 + drowsy_threshold:
                 alert = "Drowsy! Head Tilt Detected!"
                 alert_color = (0, 0, 255)
-                if not pygame.mixer.music.get_busy():
-                    pygame.mixer.music.play()
-            else:
-                pygame.mixer.music.stop()
+                if audio_enabled and not pygame.mixer.music.get_busy():
+                  pygame.mixer.music.play()
+
+            if audio_enabled:
+                  pygame.mixer.music.stop()
+                                    
 
             mp.solutions.drawing_utils.draw_landmarks(
                 frame, landmarks, mp_face_mesh.FACEMESH_TESSELATION,
